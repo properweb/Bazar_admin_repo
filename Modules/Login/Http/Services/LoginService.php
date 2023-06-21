@@ -43,7 +43,7 @@ class LoginService
     }
 
     /**
-     *  Logout
+     * Logout
      *
      * @return void
      */

@@ -17,8 +17,8 @@ class LoginController extends Controller
         $this->loginService = $loginService;
     }
     /**
-     *  Display Login View
-     *  @return Renderable
+     * Display Login View
+     * @return Renderable
      */
     public function index()
     {

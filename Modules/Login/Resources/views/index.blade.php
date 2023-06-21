@@ -4,7 +4,7 @@
     <base href="./">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>admin</title>
+    <title>Admin</title>
     <link rel="stylesheet" href="{{asset('/public/css/vendors/simplebar.css')}}">
     <link href="{{asset('/public/css/style.css')}}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.23.0/themes/prism.css">
