@@ -7,7 +7,7 @@ use Modules\Brand\Entities\Brand;
 
 class User extends Model
 {
-    protected $fillable = [];
+    protected $fillable =  [];
 
     public function brandDetails()
     {
