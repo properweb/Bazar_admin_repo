@@ -43,9 +43,9 @@ class LoginService
     }
 
     /**
-     * Logout
+     *  Logout
      *
-     * @return void
+     *  @return void
      */
     public function logOut(): void
     {
