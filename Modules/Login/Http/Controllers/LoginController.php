@@ -3,6 +3,7 @@
 namespace Modules\Login\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Login\Http\Services\LoginService;
@@ -16,7 +17,7 @@ class LoginController extends Controller
         $this->loginService = $loginService;
     }
     /**
-     * Display a listing of the resource.
+     * Display Login View
      * @return Renderable
      */
     public function index()
@@ -24,7 +25,11 @@ class LoginController extends Controller
         return view('login::index');
     }
 
-    public function submitLogin(Request $request)
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function submitLogin(Request $request): RedirectResponse
     {
         $credentials = $request->only('email', 'password');
         $loggedIn = $this->loginService->attemptLogin($credentials);
@@ -37,7 +42,12 @@ class LoginController extends Controller
         }
     }
 
-    public function logOut()
+    /**
+     * Logout
+     *
+     * @return RedirectResponse
+     */
+    public function logOut(): RedirectResponse
     {
         $this->loginService->logOut();
         return redirect('/login');
