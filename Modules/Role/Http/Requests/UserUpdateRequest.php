@@ -46,7 +46,6 @@ class UserUpdateRequest extends FormRequest
                 'confirmed'
             ],
             'role' => 'required|numeric'
-
         ];
     }
 

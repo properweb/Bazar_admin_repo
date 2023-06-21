@@ -37,7 +37,6 @@ class UserRequest extends FormRequest
                 'regex:/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^\w\s]).{1,}$/'
             ],
             'role' => 'required|numeric'
-
         ];
     }
 

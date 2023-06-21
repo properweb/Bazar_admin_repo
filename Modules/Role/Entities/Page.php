@@ -13,7 +13,6 @@ class Page extends Model
     {
         return $this->belongsTo(Page::class, 'id');
     }
-
     public function children()
     {
         return $this->hasMany(Page::class, 'parent_id');

@@ -39,7 +39,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Display view onRole create .
+     * Display view onRole create
      * @return Renderable
      */
     public function create(): Renderable

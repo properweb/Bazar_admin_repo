@@ -34,7 +34,6 @@ class RoleRequest extends FormRequest
                     $fail('At least one checkbox must be selected.');
                 }
             }],
-
         ];
     }
 
