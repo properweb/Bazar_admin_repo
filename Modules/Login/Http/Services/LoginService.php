@@ -2,11 +2,7 @@
 
 namespace Modules\Login\Http\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-
 
 class LoginService
 {
@@ -46,7 +42,12 @@ class LoginService
 
     }
 
-    public function logOut()
+    /**
+     * Logout
+     *
+     * @return void
+     */
+    public function logOut(): void
     {
         Auth::logout();
     }
