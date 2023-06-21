@@ -1,0 +1,2 @@
+[17-Jun-2023 12:06:29 UTC] PHP Fatal error:  Trait "Modules\Role\Entities\SoftDeletes" not found in /home/bazarcenter/public_html/staging.bazarcenter.ca/admin/Modules/Role/Entities/Role.php on line 8
+[20-Jun-2023 10:25:29 UTC] PHP Fatal error:  Allowed memory size of 67108864 bytes exhausted (tried to allocate 56627200 bytes) in /home/bazarcenter/public_html/staging.bazarcenter.ca/admin/Modules/Brand/Http/Controllers/BrandController.php on line 28
