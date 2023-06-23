@@ -34,7 +34,7 @@ class LoginController extends Controller
     {
         $credentials = $request->only('email', 'password');
         $loggedIn = $this->loginService->attemptLogin($credentials);
-        if (!empty($loggedIn)) {
+        if ($loggedIn) {
             return redirect()->intended('/dashboard');
         } else {
             return redirect()->back()->withErrors(['error' => 'Invalid credentials.']);
