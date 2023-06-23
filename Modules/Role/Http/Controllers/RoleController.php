@@ -11,7 +11,8 @@ use Modules\Role\Http\Services\RoleService;
 use Modules\Role\Http\Requests\RoleRequest;
 use Modules\Role\Http\Requests\UserRequest;
 use Modules\Role\Http\Requests\UserUpdateRequest;
-use Modules\Role\Entities\Role;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Modules\Login\Entities\User;
 
 
@@ -34,12 +35,13 @@ class RoleController extends Controller
         if (empty($user)) {
             return redirect()->intended('/login');
         }
+
         $response = $this->roleService->show();
-        return view('role::show', ['data' => $response['data']]);
+        return view('role::show', ['data' => $response]);
     }
 
     /**
-     * Display view onRole create
+     * Display view onRole create .
      * @return Renderable
      */
     public function create(): Renderable
@@ -51,7 +53,7 @@ class RoleController extends Controller
 
         $response = $this->roleService->getPages();
 
-        return view('role::create', ['categories' => $response['data']]);
+        return view('role::create', ['pages' => json_decode($response)]);
     }
 
     /**
@@ -80,10 +82,9 @@ class RoleController extends Controller
             return redirect()->intended('/login');
         }
         $role = $this->roleService->details($id);
-
         $response = $this->roleService->getPages();
 
-        return view('role::details', ['role' => $role['data'], 'categories' => $response['data']]);
+        return view('role::details', ['role' => $role, 'pages' => json_decode($response)]);
 
     }
 

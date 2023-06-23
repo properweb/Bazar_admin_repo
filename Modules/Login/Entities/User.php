@@ -8,8 +8,9 @@ use Modules\Brand\Entities\Brand;
 class User extends Model
 {
 
-
     protected $fillable = [];
+    const ROLE_BRAND = 'brand';
+    const ROLE_RETAILER = 'retailer';
 
     public function brandDetails()
     {

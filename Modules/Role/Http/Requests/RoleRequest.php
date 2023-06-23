@@ -27,13 +27,14 @@ class RoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => 'required|string',
+            'role' => 'required|string|unique:roles,name,'.$this->id,
             'status' => 'required|numeric',
             'checkbox' => ['required', 'array', function ($attribute, $value, $fail) {
                 if (empty($value)) {
                     $fail('At least one checkbox must be selected.');
                 }
             }],
+
         ];
     }
 

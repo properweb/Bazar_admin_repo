@@ -5,10 +5,11 @@ namespace Modules\Role\Http\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Modules\Role\Entities\Role;
-use Modules\Role\Entities\Page;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Modules\Login\Entities\User;
 use Illuminate\Support\Facades\Hash;
+
 
 
 class RoleService
@@ -17,23 +18,18 @@ class RoleService
      * Create Role
      *
      * @param array $requestData
-     * @return array
+     * @return string
      */
-    public function submitRole(array $requestData): array
+    public function submitRole(array $requestData): string
     {
         $name = $requestData['role'];
+        $Role = Role::create(['name' => $name]);
         $checkboxValues = $requestData['checkbox'];
-        $permission = implode(',', $checkboxValues);
-        $role = new Role();
-        $role->role = $name;
-        $role->status = 1;
-        $role->permission = $permission;
-        $role->save();
-        return [
-            'res' => true,
-            'msg' => 'Successfully created role',
-            'data' => ''
-        ];
+        foreach($checkboxValues as $permission)
+        {
+            $Role->givePermissionTo([$permission]);
+        }
+        return '';
     }
 
     /**
@@ -43,36 +39,28 @@ class RoleService
      */
     public function show(): array
     {
-        $role = Role::where('role', '!=', 'admin')
-            ->where('role', '!=', 'Content Moderator')
+        $role = Role::where('id', '!=', '1')
             ->get();
         $allRole = [];
         if (!empty($role)) {
             foreach ($role as $v) {
-                if($v->status==1)
-                {
+                if ($v->status == 1) {
                     $status = 'Active';
-                }
-                else
-                {
+                } else {
                     $status = 'Inactive';
                 }
                 $allRole[] = array(
                     'id' => $v->id,
-                    'role' => $v->role,
+                    'role' => $v->name,
                     'status' => $status
                 );
             }
         }
-        return [
-            'res' => true,
-            'msg' => '',
-            'data' => $allRole
-        ];
+        return $allRole;
     }
 
     /**
-     * Show Details
+     * Details of role
      *
      * @param $requestData
      * @return array
@@ -80,23 +68,31 @@ class RoleService
     public function details($requestData): array
     {
         $role = Role::findOrFail($requestData->id);
-        return [
-            'res' => true,
-            'msg' => '',
-            'data' => $role
-        ];
+
+        $permissions = $role->permissions;
+        $rolePermission = [];
+        if(!empty($permissions))
+        {
+            foreach($permissions as $permission)
+            {
+                $rolePermission[] = $permission->id;
+            }
+        }
+
+        $data['role'] = $role->name;
+        $data['status'] = $role->status;
+        $data['permissions'] = $rolePermission;
+        return $data;
     }
 
     /**
      * Get all Pages
      *
-     * @return array
+     * @return string
      */
-    public function getPages(): array
+    public function getPages(): string
     {
-        $categories = Page::with('parent')->get();
-
-        return ['res' => true, 'msg' => "", 'data' => $categories];
+        return Permission::all();
     }
 
     /**
@@ -110,12 +106,11 @@ class RoleService
     {
 
         $checkboxValues = $requestData['checkbox'];
-        $permission = implode(',', $checkboxValues);
         $role = Role::findOrFail($id);
-        $role->role = $requestData['role'];
+        $role->name = $requestData['role'];
         $role->status = $requestData['status'];
-        $role->permission = $permission;
         $role->save();
+        $role->syncPermissions($checkboxValues);
         return [
             'res' => true,
             'msg' => 'Successfully updated',
@@ -149,7 +144,8 @@ class RoleService
     public function showAdmin(): array
     {
         $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
-            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.role', 'users.id')
+            ->where('roles.id','!=','1')
+            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
             ->get();
         $allUser = [];
         if (!empty($adminUser)) {
@@ -159,7 +155,7 @@ class RoleService
                     'first_name' => $v->first_name,
                     'last_name' => $v->last_name,
                     'email' => $v->email,
-                    'role' => $v->first_name,
+                    'role' => $v->name,
                 );
             }
         }
@@ -178,14 +174,14 @@ class RoleService
      */
     public function getRole(): array
     {
-        $role = Role::where('role', '!=', 'Super Admin')
+        $role = Role::where('name', '!=', 'Super Admin')
             ->get();
         $allRole = [];
         if (!empty($role)) {
             foreach ($role as $v) {
                 $allRole[] = array(
                     'id' => $v->id,
-                    'role' => $v->role
+                    'role' => $v->name
                 );
             }
         }

@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+@php
+    $userRoles = getUserRole();
+
+@endphp
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <base href="./">
@@ -19,7 +23,7 @@
 <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
     <div class="sidebar-brand d-none d-md-flex">
 
-            <img src="https://staging1.bazarcenter.ca/assets/images/bazar.svg" alt="">
+        <img src="https://staging1.bazarcenter.ca/assets/images/bazar.svg" alt="">
 
         <svg class="sidebar-brand-narrow" width="46" height="46" alt="CoreUI Logo">
             <use xlink:href="{{asset('/public/assets/brand/coreui.svg#signet')}}"></use>
@@ -28,19 +32,25 @@
     <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
         <li class="nav-item"><a class="nav-link" href="<?php echo url('/dashboard')?>">
                 Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show')?>">
-                Role</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show-admin-user')?>">
-                Admin Users</a></li>
+        @can('manage roles')
+            <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show')?>">
+                    Role</a></li>
+        @endcan
+        @can('manage users')
+            <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show-admin-user')?>">
+                    Admin Users</a></li>
+        @endcan
     </ul>
     <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
 </div>
 <div class="wrapper d-flex flex-column min-vh-100 bg-light">
     <header class="header header-sticky mb-4">
         <div class="container-fluid">
-            <button class="header-toggler px-md-0 me-md-3" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
+            <button class="header-toggler px-md-0 me-md-3" type="button"
+                    onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()">
 
-            </button><a class="header-brand d-md-none" href="#">
+            </button>
+            <a class="header-brand d-md-none" href="#">
             </a>
             <ul class="header-nav d-none d-md-flex">
                 <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>

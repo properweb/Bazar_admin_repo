@@ -2,11 +2,10 @@
 
 namespace Modules\Login\Http\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-
+use Modules\Login\Entities\User;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class LoginService
 {
@@ -14,39 +13,35 @@ class LoginService
      * Sign In a user
      *
      * @param array $requestData
-     * @return array
+     * @return string
      */
-    public function attemptLogin(array $requestData): array
+    public function attemptLogin(array $requestData): string
     {
+        $data = '';
         if (Auth::attempt(["email" => $requestData['email'], "password" => $requestData['password']])) {
             $user = Auth::user();
-            $role = $user->role;
-            if ($role == 'brand' || $role == 'retailer') {
+            $userRole = $user->role;
+            if ($userRole == User::ROLE_BRAND || $userRole == User::ROLE_RETAILER) {
                 Auth::logout();
-                return [
-                    'res' => false,
-                    'msg' => 'Invalid credentials',
-                    'data' => ''
-                ];
+                return $data;
             } else {
-                return [
-                    'res' => true,
-                    'msg' => '',
-                    'data' => $user
-                ];
+                $role = Role::findOrFail($userRole);
+                //dd($role);
+                $user->assignRole($role->name);
+                //$user->assignRole($role);
+                return $user;
             }
-
         } else {
-            return [
-                'res' => false,
-                'msg' => 'Invalid credentials',
-                'data' => ''
-            ];
+            return $data;
         }
-
     }
 
-    public function logOut()
+    /**
+     * Logout
+     *
+     * @return void
+     */
+    public function logOut(): void
     {
         Auth::logout();
     }
