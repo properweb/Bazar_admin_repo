@@ -3,6 +3,7 @@
 namespace Modules\Login\Http\Services;
 
 use Illuminate\Support\Facades\Auth;
+use Modules\Login\Entities\User;
 
 class LoginService
 {
@@ -10,42 +11,29 @@ class LoginService
      * Sign In a user
      *
      * @param array $requestData
-     * @return array
+     * @return string
      */
-    public function attemptLogin(array $requestData): array
+    public function attemptLogin(array $requestData): string
     {
+        $data = '';
         if (Auth::attempt(["email" => $requestData['email'], "password" => $requestData['password']])) {
             $user = Auth::user();
             $role = $user->role;
-            if ($role == 'brand' || $role == 'retailer') {
+            if ($role == User::ROLE_BRAND || $role == User::ROLE_RETAILER) {
                 Auth::logout();
-                return [
-                    'res' => false,
-                    'msg' => 'Invalid credentials',
-                    'data' => ''
-                ];
+                return $data;
             } else {
-                return [
-                    'res' => true,
-                    'msg' => '',
-                    'data' => $user
-                ];
+                return $user;
             }
-
         } else {
-            return [
-                'res' => false,
-                'msg' => 'Invalid credentials',
-                'data' => ''
-            ];
+            return $data;
         }
-
     }
 
     /**
-     *  Logout
+     * Logout
      *
-     *  @return void
+     * @return void
      */
     public function logOut(): void
     {
