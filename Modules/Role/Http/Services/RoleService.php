@@ -23,13 +23,13 @@ class RoleService
     public function submitRole(array $requestData): string
     {
         $name = $requestData['role'];
-        $Role = Role::create(['name' => $name]);
+        $roles = Role::create(['name' => $name]);
         $checkboxValues = $requestData['checkbox'];
         foreach($checkboxValues as $permission)
         {
-            $Role->givePermissionTo([$permission]);
+            $roles->givePermissionTo([$permission]);
         }
-        return '';
+        return true;
     }
 
     /**
@@ -39,19 +39,19 @@ class RoleService
      */
     public function show(): array
     {
-        $role = Role::where('id', '!=', '1')
+        $roles = Role::where('id', '!=', User::ROLE_SuperAdmin)
             ->get();
         $allRole = [];
-        if (!empty($role)) {
-            foreach ($role as $v) {
-                if ($v->status == 1) {
+        if (!empty($roles)) {
+            foreach ($roles as $role) {
+                if ($role->status == 1) {
                     $status = 'Active';
                 } else {
                     $status = 'Inactive';
                 }
                 $allRole[] = array(
-                    'id' => $v->id,
-                    'role' => $v->name,
+                    'id' => $role->id,
+                    'role' => $role->name,
                     'status' => $status
                 );
             }
