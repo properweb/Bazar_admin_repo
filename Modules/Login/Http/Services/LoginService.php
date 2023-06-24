@@ -8,7 +8,7 @@ use Modules\Login\Entities\User;
 class LoginService
 {
     /**
-     * Sign In a user
+     *  Sign In a user
      *
      * @param array $requestData
      * @return bool
