@@ -44,7 +44,7 @@ class RoleService
         $allRole = [];
         if (!empty($roles)) {
             foreach ($roles as $role) {
-                if ($role->status == 1) {
+                if ($role->status == Role::ROLE_Active) {
                     $status = 'Active';
                 } else {
                     $status = 'Inactive';
