@@ -130,22 +130,25 @@ class RoleService
     public function showAdmin(): array
     {
 
-        $adminUser = User::where('role', '!=', Role::ROLE_SUPER)
+        $adminUsers = User::where('role', '!=', Role::ROLE_SUPER)
             ->where('role', '!=', Role::ROLE_BRAND)
             ->where('role', '!=', Role::ROLE_RETAILER)
             ->where('role', '!=', 1)
-            ->with('role')->get();
+            ->with('roles')->get();
 
         $allUser = [];
-        if (!empty($adminUser)) {
-            foreach ($adminUser as $v) {
+
+        if (!empty($adminUsers)) {
+            foreach ($adminUsers as $adminUser) {
+                $role = json_decode($adminUser->roles);
                 $allUser[] = array(
-                    'id' => $v->id,
-                    'first_name' => $v->first_name,
-                    'last_name' => $v->last_name,
-                    'email' => $v->email,
-                    'role' => $v->name,
+                    'id' => $adminUser->id,
+                    'first_name' => $adminUser->first_name,
+                    'last_name' => $adminUser->last_name,
+                    'email' => $adminUser->email,
+                    'role' => $role[0]->name
                 );
+
             }
         }
 
