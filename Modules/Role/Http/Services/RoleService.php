@@ -2,15 +2,11 @@
 
 namespace Modules\Role\Http\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
+
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Modules\Login\Entities\User;
 use Illuminate\Support\Facades\Hash;
-
-
+use App\Models\User;
 
 class RoleService
 {
@@ -39,12 +35,12 @@ class RoleService
      */
     public function show(): array
     {
-        $roles = Role::where('name', '!=', Role::ROLE_SuperAdmin)->where('name', '!=', Role::ROLE_Admin)->where('name', '!=', Role::ROLE_Content)
+        $roles = Role::where('name', '!=', Role::ROLE_SUPER)->where('name', '!=', Role::ROLE_ADMIN)->where('name', '!=', Role::ROLE_CONTENT)
             ->get();
         $allRole = [];
         if (!empty($roles)) {
             foreach ($roles as $role) {
-                if ($role->status == Role::ROLE_Active) {
+                if ($role->status == Role::ROLE_ACTIVE) {
                     $status = 'Active';
                 } else {
                     $status = 'Inactive';
@@ -175,7 +171,7 @@ class RoleService
     public function showTrash(): array
     {
         $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.name', '!=', Role::ROLE_SuperAdmin)
+            ->where('roles.name', '!=', Role::ROLE_SUPER)
             ->withTrashed()->whereNotNull('deleted_at')
             ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
             ->get();
@@ -206,7 +202,7 @@ class RoleService
      */
     public function getRole(): array
     {
-        $role = Role::where('name', '!=', 'Super Admin')
+        $role = Role::where('name', '!=', Role::ROLE_SUPER)
             ->get();
         $allRole = [];
         if (!empty($role)) {
@@ -237,7 +233,6 @@ class RoleService
         $email = $requestData['email'];
         $password = Hash::make($requestData['password']);
         $role = $requestData['role'];
-
         $user = new User();
         $user->first_name = $first_name;
         $user->last_name = $last_name;
@@ -246,6 +241,10 @@ class RoleService
         $user->role = $role;
         $user->token = '';
         $user->save();
+        $user = User::findOrFail($user->id);
+        $role = Role::findOrFail($role);
+        $user->assignRole($role);
+
         return [
             'res' => true,
             'msg' => 'Created Successfully',
@@ -296,6 +295,9 @@ class RoleService
         }
         $update->role = $role;
         $update->save();
+        $user = User::findOrFail($id);
+        $role = Role::findOrFail($role);
+        $user->assignRole($role);
         return [
             'res' => true,
             'msg' => 'Successfully updated',
