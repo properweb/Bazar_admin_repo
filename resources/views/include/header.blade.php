@@ -38,8 +38,13 @@
         @endcan
         @can('manage users')
             <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show-admin-user')?>">
-                    Admin Users</a></li>
+                    User Management</a></li>
         @endcan
+        @can('manage brands')
+            <li class="nav-item"><a class="nav-link" href="<?php echo url('/role/show-admin-user')?>">
+                    Brand Management</a></li>
+        @endcan
+
     </ul>
     <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
 </div>

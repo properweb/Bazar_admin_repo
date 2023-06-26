@@ -39,7 +39,7 @@ class RoleService
      */
     public function show(): array
     {
-        $roles = Role::where('id', '!=', User::ROLE_SuperAdmin)
+        $roles = Role::where('name', '!=', Role::ROLE_SuperAdmin)->where('name', '!=', Role::ROLE_Admin)->where('name', '!=', Role::ROLE_Content)
             ->get();
         $allRole = [];
         if (!empty($roles)) {
@@ -145,6 +145,38 @@ class RoleService
     {
         $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
             ->where('roles.id','!=','1')
+            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
+            ->get();
+        $allUser = [];
+        if (!empty($adminUser)) {
+            foreach ($adminUser as $v) {
+                $allUser[] = array(
+                    'id' => $v->id,
+                    'first_name' => $v->first_name,
+                    'last_name' => $v->last_name,
+                    'email' => $v->email,
+                    'role' => $v->name,
+                );
+            }
+        }
+
+        return [
+            'res' => true,
+            'msg' => '',
+            'data' => $allUser
+        ];
+    }
+
+    /**
+     * Show all admin user
+     *
+     * @return array
+     */
+    public function showTrash(): array
+    {
+        $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
+            ->where('roles.name', '!=', Role::ROLE_SuperAdmin)
+            ->withTrashed()->whereNotNull('deleted_at')
             ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
             ->get();
         $allUser = [];

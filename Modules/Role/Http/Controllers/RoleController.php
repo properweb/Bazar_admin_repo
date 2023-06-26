@@ -5,8 +5,6 @@ namespace Modules\Role\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Modules\Role\Http\Services\RoleService;
 use Modules\Role\Http\Requests\RoleRequest;
 use Modules\Role\Http\Requests\UserRequest;
@@ -157,6 +155,22 @@ class RoleController extends Controller
     }
 
     /**
+     * Show All Trash Admin User
+     *
+     * @return Renderable
+     */
+    public function showTrash(): Renderable
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $response = $this->roleService->showTrash();
+
+        return view('role::show-trash', ['data' => $response['data']]);
+    }
+
+    /**
      * Display view onRole create .
      * @return Renderable
      */
@@ -241,5 +255,19 @@ class RoleController extends Controller
         }
         User::where('id', $id)->delete();
         return redirect()->back()->with('success', 'Deleted Successfully');
+    }
+
+    /**
+     * Restore User
+     *
+     * @param $id
+     * @return mixed
+     */
+    public function restoreTrash($id): mixed
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()->back()->with('success', 'User has been restored.');
     }
 }

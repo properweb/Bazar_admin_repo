@@ -22,6 +22,8 @@ Route::middleware(['auth', 'permission:manage users'])
     ->name('role.')
     ->group(function () {
         Route::get('/show-admin-user', 'RoleController@showAdmin');
+        Route::get('/show-trash-user', 'RoleController@showTrash');
+        Route::get('/restore/{id}', 'RoleController@restoreTrash');
         Route::get('/create-user', 'RoleController@createUser');
         Route::post('/create-user', 'RoleController@postUser');
         Route::get('/user-details/{id}', 'RoleController@detailUser');
