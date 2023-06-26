@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Brand\Entities\Brand;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     use HasRoles;
+    use SoftDeletes;
     protected $fillable = [];
 
     const ROLE_BRAND = 'brand';
@@ -22,4 +24,5 @@ class User extends Authenticatable
     {
         return $this->hasOne(Brand::class);
     }
+
 }
