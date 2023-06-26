@@ -64,20 +64,10 @@ class RoleService
     public function details($requestData): array
     {
         $role = Role::findOrFail($requestData->id);
-
-        $permissions = $role->permissions;
-        $rolePermission = [];
-        if(!empty($permissions))
-        {
-            foreach($permissions as $permission)
-            {
-                $rolePermission[] = $permission->id;
-            }
-        }
-
+        $permissions = $role->permissions->pluck('id')->toArray();
         $data['role'] = $role->name;
         $data['status'] = $role->status;
-        $data['permissions'] = $rolePermission;
+        $data['permissions'] = $permissions;
         return $data;
     }
 
@@ -139,10 +129,13 @@ class RoleService
      */
     public function showAdmin(): array
     {
-        $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.id','!=','1')
-            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
-            ->get();
+
+        $adminUser = User::where('role', '!=', Role::ROLE_SUPER)
+            ->where('role', '!=', Role::ROLE_BRAND)
+            ->where('role', '!=', Role::ROLE_RETAILER)
+            ->where('role', '!=', 1)
+            ->with('role')->get();
+
         $allUser = [];
         if (!empty($adminUser)) {
             foreach ($adminUser as $v) {
