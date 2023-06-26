@@ -16,9 +16,9 @@ class User extends Authenticatable
 
     const ROLE_BRAND = 'brand';
     const ROLE_RETAILER = 'retailer';
-    const ROLE_SuperAdmin = 'super admin';
-    const ROLE_Admin = 'admin';
-    const ROLE_Content = 'Content Moderator';
+    const ROLE_SUPER = 'super admin';
+    const ROLE_ADMIN = 'admin';
+    const ROLE_CONTENT = 'Content Moderator';
 
     public function brandDetails()
     {
