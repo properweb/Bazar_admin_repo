@@ -4,8 +4,7 @@ namespace Modules\Login\Http\Services;
 
 use Illuminate\Support\Facades\Auth;
 use Modules\Login\Entities\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+
 
 class LoginService
 {
