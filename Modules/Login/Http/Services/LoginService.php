@@ -5,33 +5,27 @@ namespace Modules\Login\Http\Services;
 use Illuminate\Support\Facades\Auth;
 use Modules\Login\Entities\User;
 
-
 class LoginService
 {
     /**
-     * Sign In a user
+     *  Sign In a user
      *
      * @param array $requestData
-     * @return string
+     * @return bool
      */
-    public function attemptLogin(array $requestData): string
+    public function attemptLogin(array $requestData): bool
     {
-        $data = '';
         if (Auth::attempt(["email" => $requestData['email'], "password" => $requestData['password']])) {
             $user = Auth::user();
-            $userRole = $user->role;
-            if ($userRole == User::ROLE_BRAND || $userRole == User::ROLE_RETAILER) {
+            $role = $user->role;
+            if ($role == User::ROLE_BRAND || $role == User::ROLE_RETAILER) {
                 Auth::logout();
-                return $data;
+                return false;
             } else {
-                $role = Role::findOrFail($userRole);
-                //dd($role);
-                $user->assignRole($role->name);
-                //$user->assignRole($role);
-                return $user;
+                return true;
             }
         } else {
-            return $data;
+            return false;
         }
     }
 
