@@ -2,38 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
-use Modules\Brand\Entities\Brand;
-use Spatie\Permission\Traits\HasRoles;
-use App\Models\Models\Role;
-
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use Notifiable,HasRoles;
-    use SoftDeletes;
-
-    const ROLE_BRAND = 'brand';
-    const ROLE_RETAILER = 'retailer';
-    const ROLE_SUPER_ADMIN = 'super admin';
-    const ROLE_ADMIN = 'admin';
-    const ROLE_CONTENT_ADMIN = 'Content Moderator';
-    const ROLE_ID_SUPER_ADMIN = 1;
-
-    public function brandDetails()
-    {
-        return $this->hasOne(Brand::class);
-    }
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
