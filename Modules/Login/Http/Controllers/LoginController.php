@@ -16,6 +16,7 @@ class LoginController extends Controller
     {
         $this->loginService = $loginService;
     }
+
     /**
      * Display Login View
      * @return Renderable
@@ -33,11 +34,9 @@ class LoginController extends Controller
     {
         $credentials = $request->only('email', 'password');
         $loggedIn = $this->loginService->attemptLogin($credentials);
-
-        if ($loggedIn['res']==1) {
+        if ($loggedIn) {
             return redirect()->intended('/dashboard');
         } else {
-
             return redirect()->back()->withErrors(['error' => 'Invalid credentials.']);
         }
     }
@@ -52,6 +51,4 @@ class LoginController extends Controller
         $this->loginService->logOut();
         return redirect('/login');
     }
-
-
 }

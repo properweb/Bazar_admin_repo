@@ -72,7 +72,7 @@ class RoleService
     }
 
     /**
-     * Details of role
+     * Show Details
      *
      * @param $requestData
      * @return array
