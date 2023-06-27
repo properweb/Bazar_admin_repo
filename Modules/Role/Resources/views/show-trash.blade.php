@@ -5,7 +5,7 @@
             <li class="breadcrumb-item">
                 <!-- if breadcrumb is single--><span>Home</span>
             </li>
-            <li class="breadcrumb-item active"><span>Admin Users</span></li>
+            <li class="breadcrumb-item active"><span>Trash Users</span></li>
         </ol>
     </nav>
 </div>
@@ -20,10 +20,6 @@
                     {{ session()->get('success') }}
                 </div>
             @endif
-            <input type="button" value="Add New" onClick="window.location.href='{{ url('role/create-user') }}'"
-                   class="btn btn-primary" style="float:right"/>
-            <input type="button" value="Trash User" onClick="window.location.href='{{ url('role/show-trash-user') }}'"
-                   class="btn btn-primary" style="float:right"/>
             <table class="table table-hover" id="myTable">
                 <thead>
 
@@ -32,7 +28,7 @@
                     <th scope="col">Last Name</th>
                     <th scope="col">Email</th>
                     <th scope="col">Role</th>
-                    <th scope="col">Action</th>
+                    <th scope="col">Restore</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -42,10 +38,7 @@
                         <td>{{$v['last_name']}}</td>
                         <td>{{$v['email']}}</td>
                         <td>{{$v['role']}}</td>
-                        <td><a href="{{ url('role/user-details/')}}/{{$v['id']}}"><span class="fas fa-pen"></span></a>
-                            <a href="{{ url('role/user-delete/')}}/{{$v['id']}}"
-                               onclick="event.preventDefault(); confirmDelete('{{ $v['id'] }}');"><span
-                                    class="fas fa-trash"></span></a></td>
+                        <td><a href="{{ url('role/restore/')}}/{{$v['id']}}" onclick="event.preventDefault(); confirmRestore('{{ $v['id'] }}');">Restore</a></td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -70,12 +63,11 @@
         $('#myTable').DataTable();
     });
 
-    function confirmDelete(itemId) {
-        if (confirm("Are you sure you want to delete this?")) {
-            window.location.href = "{{ url('role/user-delete/')}}/" + itemId; // Replace with your delete route URL
+    function confirmRestore(itemId) {
+        if (confirm("Are you sure you want to restore this?")) {
+            window.location.href = "{{ url('role/restore/')}}/" + itemId; // Replace with your delete route URL
         }
     }
 </script>
-
 </body>
 </html>

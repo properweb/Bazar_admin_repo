@@ -2,14 +2,11 @@
 
 namespace Modules\Role\Http\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use Modules\Role\Entities\Role;
-use Modules\Role\Entities\Page;
-use Modules\Login\Entities\User;
-use Illuminate\Support\Facades\Hash;
 
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class RoleService
 {
@@ -17,23 +14,18 @@ class RoleService
      * Create Role
      *
      * @param array $requestData
-     * @return array
+     * @return string
      */
-    public function submitRole(array $requestData): array
+    public function submitRole(array $requestData): string
     {
         $name = $requestData['role'];
+        $rolePermissions = Role::create(['name' => $name]);
         $checkboxValues = $requestData['checkbox'];
-        $permission = implode(',', $checkboxValues);
-        $role = new Role();
-        $role->role = $name;
-        $role->status = 1;
-        $role->permission = $permission;
-        $role->save();
-        return [
-            'res' => true,
-            'msg' => 'Successfully created role',
-            'data' => ''
-        ];
+        foreach($checkboxValues as $permission)
+        {
+            $rolePermissions->givePermissionTo([$permission]);
+        }
+        return true;
     }
 
     /**
@@ -43,32 +35,25 @@ class RoleService
      */
     public function show(): array
     {
-        $role = Role::where('role', '!=', 'admin')
-            ->where('role', '!=', 'Content Moderator')
+        $excludedRoles = [Role::ROLE_SUPER, Role::ROLE_ADMIN, Role::ROLE_CONTENT];
+        $roles = Role::whereNotIn('name', $excludedRoles)
             ->get();
-        $allRole = [];
-        if (!empty($role)) {
-            foreach ($role as $v) {
-                if($v->status==1)
-                {
+        $allRoles = [];
+        if (!empty($roles)) {
+            foreach ($roles as $role) {
+                if ($role->status == Role::ROLE_ACTIVE) {
                     $status = 'Active';
-                }
-                else
-                {
+                } else {
                     $status = 'Inactive';
                 }
-                $allRole[] = array(
-                    'id' => $v->id,
-                    'role' => $v->role,
+                $allRoles[] = array(
+                    'id' => $role->id,
+                    'role' => $role->name,
                     'status' => $status
                 );
             }
         }
-        return [
-            'res' => true,
-            'msg' => '',
-            'data' => $allRole
-        ];
+        return $allRoles;
     }
 
     /**
@@ -80,23 +65,21 @@ class RoleService
     public function details($requestData): array
     {
         $role = Role::findOrFail($requestData->id);
-        return [
-            'res' => true,
-            'msg' => '',
-            'data' => $role
-        ];
+        $permissions = $role->permissions->pluck('id')->toArray();
+        $data['role'] = $role->name;
+        $data['status'] = $role->status;
+        $data['permissions'] = $permissions;
+        return $data;
     }
 
     /**
      * Get all Pages
      *
-     * @return array
+     * @return string
      */
-    public function getPages(): array
+    public function getPages(): string
     {
-        $categories = Page::with('parent')->get();
-
-        return ['res' => true, 'msg' => "", 'data' => $categories];
+        return Permission::all();
     }
 
     /**
@@ -110,12 +93,11 @@ class RoleService
     {
 
         $checkboxValues = $requestData['checkbox'];
-        $permission = implode(',', $checkboxValues);
         $role = Role::findOrFail($id);
-        $role->role = $requestData['role'];
+        $role->name = $requestData['role'];
         $role->status = $requestData['status'];
-        $role->permission = $permission;
         $role->save();
+        $role->syncPermissions($checkboxValues);
         return [
             'res' => true,
             'msg' => 'Successfully updated',
@@ -148,26 +130,62 @@ class RoleService
      */
     public function showAdmin(): array
     {
-        $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
-            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.role', 'users.id')
+        $excludedRoles = [Role::ROLE_SUPER, Role::ROLE_BRAND, Role::ROLE_RETAILER, User::ROLE_SUPERID];
+        $adminUsers = User::whereNotIn('role', $excludedRoles)
+            ->with('roles')
             ->get();
-        $allUser = [];
-        if (!empty($adminUser)) {
-            foreach ($adminUser as $v) {
-                $allUser[] = array(
-                    'id' => $v->id,
-                    'first_name' => $v->first_name,
-                    'last_name' => $v->last_name,
-                    'email' => $v->email,
-                    'role' => $v->first_name,
+        $allUsers = [];
+        if (!empty($adminUsers)) {
+            foreach ($adminUsers as $adminUser) {
+                $role = json_decode($adminUser->roles);
+                $allUsers[] = array(
+                    'id' => $adminUser->id,
+                    'first_name' => $adminUser->first_name,
+                    'last_name' => $adminUser->last_name,
+                    'email' => $adminUser->email,
+                    'role' => $role[0]->name
                 );
+
             }
         }
 
         return [
             'res' => true,
             'msg' => '',
-            'data' => $allUser
+            'data' => $allUsers
+        ];
+    }
+
+    /**
+     * Show all admin user
+     *
+     * @return array
+     */
+    public function showTrash(): array
+    {
+
+        $trashUsers = User::with('roles')
+            ->onlyTrashed()
+            ->get();
+        $allUsers = [];
+        if (!empty($trashUsers)) {
+            foreach ($trashUsers as $trashUser) {
+                $role = json_decode($trashUser->roles);
+                $allUsers[] = array(
+                    'id' => $trashUser->id,
+                    'first_name' => $trashUser->first_name,
+                    'last_name' => $trashUser->last_name,
+                    'email' => $trashUser->email,
+                    'role' => $role[0]->name
+                );
+
+            }
+        }
+
+        return [
+            'res' => true,
+            'msg' => '',
+            'data' => $allUsers
         ];
     }
 
@@ -178,21 +196,21 @@ class RoleService
      */
     public function getRole(): array
     {
-        $role = Role::where('role', '!=', 'Super Admin')
+        $roles = Role::where('name', '!=', Role::ROLE_SUPER)
             ->get();
-        $allRole = [];
-        if (!empty($role)) {
-            foreach ($role as $v) {
-                $allRole[] = array(
-                    'id' => $v->id,
-                    'role' => $v->role
+        $allRoles = [];
+        if (!empty($roles)) {
+            foreach ($roles as $role) {
+                $allRoles[] = array(
+                    'id' => $role->id,
+                    'role' => $role->name
                 );
             }
         }
         return [
             'res' => true,
             'msg' => '',
-            'data' => $allRole
+            'data' => $allRoles
         ];
     }
 
@@ -209,7 +227,6 @@ class RoleService
         $email = $requestData['email'];
         $password = Hash::make($requestData['password']);
         $role = $requestData['role'];
-
         $user = new User();
         $user->first_name = $first_name;
         $user->last_name = $last_name;
@@ -218,6 +235,8 @@ class RoleService
         $user->role = $role;
         $user->token = '';
         $user->save();
+        $user->assignRole($role);
+
         return [
             'res' => true,
             'msg' => 'Created Successfully',
@@ -268,6 +287,9 @@ class RoleService
         }
         $update->role = $role;
         $update->save();
+        $user = User::findOrFail($id);
+        $role = Role::findOrFail($role);
+        $user->assignRole($role);
         return [
             'res' => true,
             'msg' => 'Successfully updated',

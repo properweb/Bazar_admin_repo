@@ -49,21 +49,4 @@ class UserUpdateRequest extends FormRequest
 
         ];
     }
-
-    /**
-     * Create a json response on validation errors.
-     *
-     * @param Validator $validator
-     * @return JsonResponse
-     */
-    public function failedValidation(Validator $validator): JsonResponse
-    {
-
-        return (response()->json([
-            'res' => false,
-            'msg' => $validator->errors()->first(),
-            'data' => ""
-        ]));
-
-    }
 }

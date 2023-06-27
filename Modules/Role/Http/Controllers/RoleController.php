@@ -5,13 +5,12 @@ namespace Modules\Role\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Modules\Role\Http\Services\RoleService;
 use Modules\Role\Http\Requests\RoleRequest;
 use Modules\Role\Http\Requests\UserRequest;
 use Modules\Role\Http\Requests\UserUpdateRequest;
-use Modules\Role\Entities\Role;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Modules\Login\Entities\User;
 
 
@@ -34,8 +33,9 @@ class RoleController extends Controller
         if (empty($user)) {
             return redirect()->intended('/login');
         }
+
         $response = $this->roleService->show();
-        return view('role::show', ['data' => $response['data']]);
+        return view('role::show', ['data' => $response]);
     }
 
     /**
@@ -51,7 +51,7 @@ class RoleController extends Controller
 
         $response = $this->roleService->getPages();
 
-        return view('role::create', ['categories' => $response['data']]);
+        return view('role::create', ['pages' => json_decode($response)]);
     }
 
     /**
@@ -80,10 +80,9 @@ class RoleController extends Controller
             return redirect()->intended('/login');
         }
         $role = $this->roleService->details($id);
-
         $response = $this->roleService->getPages();
 
-        return view('role::details', ['role' => $role['data'], 'categories' => $response['data']]);
+        return view('role::details', ['role' => $role, 'pages' => json_decode($response)]);
 
     }
 
@@ -153,6 +152,22 @@ class RoleController extends Controller
         }
         $response = $this->roleService->showAdmin();
         return view('role::show-admin', ['data' => $response['data']]);
+    }
+
+    /**
+     * Show All Trash Admin User
+     *
+     * @return Renderable
+     */
+    public function showTrash(): Renderable
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $response = $this->roleService->showTrash();
+
+        return view('role::show-trash', ['data' => $response['data']]);
     }
 
     /**
@@ -240,5 +255,19 @@ class RoleController extends Controller
         }
         User::where('id', $id)->delete();
         return redirect()->back()->with('success', 'Deleted Successfully');
+    }
+
+    /**
+     * Restore User
+     *
+     * @param $id
+     * @return mixed
+     */
+    public function restoreTrash($id): mixed
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        return redirect()->back()->with('success', 'User has been restored.');
     }
 }
