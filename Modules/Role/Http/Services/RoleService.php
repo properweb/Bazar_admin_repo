@@ -19,11 +19,11 @@ class RoleService
     public function submitRole(array $requestData): string
     {
         $name = $requestData['role'];
-        $roles = Role::create(['name' => $name]);
+        $rolePermissions = Role::create(['name' => $name]);
         $checkboxValues = $requestData['checkbox'];
         foreach($checkboxValues as $permission)
         {
-            $roles->givePermissionTo([$permission]);
+            $rolePermissions->givePermissionTo([$permission]);
         }
         return true;
     }
@@ -35,9 +35,10 @@ class RoleService
      */
     public function show(): array
     {
-        $roles = Role::where('name', '!=', Role::ROLE_SUPER)->where('name', '!=', Role::ROLE_ADMIN)->where('name', '!=', Role::ROLE_CONTENT)
+        $excludedRoles = [Role::ROLE_SUPER, Role::ROLE_ADMIN, Role::ROLE_CONTENT];
+        $roles = Role::whereNotIn('name', $excludedRoles)
             ->get();
-        $allRole = [];
+        $allRoles = [];
         if (!empty($roles)) {
             foreach ($roles as $role) {
                 if ($role->status == Role::ROLE_ACTIVE) {
@@ -45,14 +46,14 @@ class RoleService
                 } else {
                     $status = 'Inactive';
                 }
-                $allRole[] = array(
+                $allRoles[] = array(
                     'id' => $role->id,
                     'role' => $role->name,
                     'status' => $status
                 );
             }
         }
-        return $allRole;
+        return $allRoles;
     }
 
     /**
@@ -129,19 +130,15 @@ class RoleService
      */
     public function showAdmin(): array
     {
-
-        $adminUsers = User::where('role', '!=', Role::ROLE_SUPER)
-            ->where('role', '!=', Role::ROLE_BRAND)
-            ->where('role', '!=', Role::ROLE_RETAILER)
-            ->where('role', '!=', 1)
-            ->with('roles')->get();
-
-        $allUser = [];
-
+        $excludedRoles = [Role::ROLE_SUPER, Role::ROLE_BRAND, Role::ROLE_RETAILER, User::ROLE_SUPERID];
+        $adminUsers = User::whereNotIn('role', $excludedRoles)
+            ->with('roles')
+            ->get();
+        $allUsers = [];
         if (!empty($adminUsers)) {
             foreach ($adminUsers as $adminUser) {
                 $role = json_decode($adminUser->roles);
-                $allUser[] = array(
+                $allUsers[] = array(
                     'id' => $adminUser->id,
                     'first_name' => $adminUser->first_name,
                     'last_name' => $adminUser->last_name,
@@ -155,7 +152,7 @@ class RoleService
         return [
             'res' => true,
             'msg' => '',
-            'data' => $allUser
+            'data' => $allUsers
         ];
     }
 
@@ -166,28 +163,29 @@ class RoleService
      */
     public function showTrash(): array
     {
-        $adminUser = User::join('roles', 'users.role', '=', 'roles.id')
-            ->where('roles.name', '!=', Role::ROLE_SUPER)
-            ->withTrashed()->whereNotNull('deleted_at')
-            ->select('users.first_name', 'users.last_name', 'users.email', 'roles.name', 'users.id')
+
+        $trashUsers = User::with('roles')
+            ->onlyTrashed()
             ->get();
-        $allUser = [];
-        if (!empty($adminUser)) {
-            foreach ($adminUser as $v) {
-                $allUser[] = array(
-                    'id' => $v->id,
-                    'first_name' => $v->first_name,
-                    'last_name' => $v->last_name,
-                    'email' => $v->email,
-                    'role' => $v->name,
+        $allUsers = [];
+        if (!empty($trashUsers)) {
+            foreach ($trashUsers as $trashUser) {
+                $role = json_decode($trashUser->roles);
+                $allUsers[] = array(
+                    'id' => $trashUser->id,
+                    'first_name' => $trashUser->first_name,
+                    'last_name' => $trashUser->last_name,
+                    'email' => $trashUser->email,
+                    'role' => $role[0]->name
                 );
+
             }
         }
 
         return [
             'res' => true,
             'msg' => '',
-            'data' => $allUser
+            'data' => $allUsers
         ];
     }
 
@@ -198,21 +196,21 @@ class RoleService
      */
     public function getRole(): array
     {
-        $role = Role::where('name', '!=', Role::ROLE_SUPER)
+        $roles = Role::where('name', '!=', Role::ROLE_SUPER)
             ->get();
-        $allRole = [];
-        if (!empty($role)) {
-            foreach ($role as $v) {
-                $allRole[] = array(
-                    'id' => $v->id,
-                    'role' => $v->name
+        $allRoles = [];
+        if (!empty($roles)) {
+            foreach ($roles as $role) {
+                $allRoles[] = array(
+                    'id' => $role->id,
+                    'role' => $role->name
                 );
             }
         }
         return [
             'res' => true,
             'msg' => '',
-            'data' => $allRole
+            'data' => $allRoles
         ];
     }
 
@@ -237,8 +235,6 @@ class RoleService
         $user->role = $role;
         $user->token = '';
         $user->save();
-        $user = User::findOrFail($user->id);
-        $role = Role::findOrFail($role);
         $user->assignRole($role);
 
         return [

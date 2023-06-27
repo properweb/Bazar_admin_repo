@@ -23,6 +23,7 @@ class User extends Authenticatable
     const ROLE_SUPER = 'super admin';
     const ROLE_ADMIN = 'admin';
     const ROLE_CONTENT = 'Content Moderator';
+    const ROLE_SUPERID = 1;
 
     public function brandDetails()
     {
