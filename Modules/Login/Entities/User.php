@@ -13,6 +13,8 @@ class User extends Authenticatable
 {
     use HasRoles;
     use SoftDeletes;
+
+
     protected $fillable = [];
 
     const ROLE_BRAND = 'brand';
