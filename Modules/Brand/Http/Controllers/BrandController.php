@@ -3,114 +3,171 @@
 namespace Modules\Brand\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Brand\Http\Services\BrandService;
+use Illuminate\Http\JsonResponse;
 use Modules\Login\Entities\User;
-use Yajra\DataTables\DataTables;
-
+use Modules\Brand\Http\Requests\BrandRequest;
+use Modules\Role\Http\Requests\RoleRequest;
 
 class BrandController extends Controller
 {
+    private BrandService $brandService;
+
+    public function __construct(BrandService $brandService)
+    {
+        $this->brandService = $brandService;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Call View page of brand listing
+     *
      * @return Renderable
      */
-    public function index(Request $request)
+    public function index(): Renderable
     {
-        if ($request->ajax()) {
-            $data = User::where('role', '=', 'brand')
-                ->whereIn('id', function ($query) {
-                    $query->select('user_id')
-                        ->from('brands');
-                })
-                ->with('brandDetails');
-
-
-
-            $filteredCount = $data->count();
-
-            // Set the pagination parameters
-            $start = $request->input('start', 0);
-            $length = $request->input('length', 10);
-
-            // Apply pagination
-            $data = $data->offset($start)->limit($length);
-
-            $result = DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return '<a href="/users/' . $row->id . '">Edit</a> <a href="javascript:void(0)" class="delete btn btn-danger btn-sm">Delete</a>';
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-
-            $resultData = $result->getData(true);
-            $resultData['recordsFiltered'] = $filteredCount;
-            $resultData['draw'] = $request->input('draw');
-
-            return response()->json($resultData);
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
         }
-
         return view('brand::index');
     }
 
     /**
-     * Show the form for creating a new resource.
-     * @return Renderable
+     * Get all Brand Via Ajax
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function create()
+    public function brandData(Request $request): JsonResponse
     {
-        return view('brand::create');
+        $data = $this->brandService->brandData($request);
+        return response()->json($data);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Details of Brand
+     *
+     * @param  $id
+     * @return Renderable
+     */
+    public function details($id): Renderable
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $data = $this->brandService->detail($id);
+
+        return view('brand::details', ['detail' => $data]);
+
+    }
+
+    /**
+     * Delete Role
+     *
+     * @param $id
+     * @return mixed
+     */
+    public function delete($id): mixed
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $this->brandService->delete($id);
+        User::where('id', $id)->delete();
+        return redirect()->back()->with('success', 'Deleted Successfully');
+    }
+
+    /**
+     * Show Brand Trash
+     *
+     * @return Renderable
+     */
+    public function trash(): Renderable
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $response = $this->brandService->showTrash();
+
+        return view('brand::trash', ['data' => $response['data']]);
+    }
+
+    /**
+     * Create Brand
+     *
      * @param Request $request
      * @return Renderable
      */
-    public function store(Request $request)
+    public function create(Request $request): Renderable
     {
-        //
+        $countries = $this->brandService->getCountry();
+        $categories = $this->brandService->getCategory();
+
+        return view('brand::create', ['countries' => $countries,'categories' => $categories]);
+
     }
 
     /**
-     * Show the specified resource.
-     * @param int $id
-     * @return Renderable
+     * Create New Brand
+     *
+     * @param BrandRequest $request
+     * @return RedirectResponse
      */
-    public function show($id)
+    public function createBrand(BrandRequest $request): RedirectResponse
     {
-        return view('brand::show');
+        $this->brandService->createBrand($request->validated(),$request);
+        return redirect()->back()->with('success', 'Brand Created Successfully and send an email to brand with login information');
+
     }
 
     /**
-     * Show the form for editing the specified resource.
-     * @param int $id
-     * @return Renderable
-     */
-    public function edit($id)
-    {
-        return view('brand::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Get state By country
+     *
      * @param Request $request
-     * @param int $id
-     * @return Renderable
+     * @return JsonResponse
      */
-    public function update(Request $request, $id)
+    public function getState(Request $request): JsonResponse
     {
-        //
+        $states = $this->brandService->getState($request);
+
+        return response()->json($states);
+
     }
 
     /**
-     * Remove the specified resource from storage.
-     * @param int $id
-     * @return Renderable
+     * Get city By state
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function destroy($id)
+    public function getCity(Request $request): JsonResponse
     {
-        //
+        $states = $this->brandService->getCity($request);
+
+        return response()->json($states);
+
+    }
+
+    /**
+     * Show Brand in Website
+     *
+     * @param $id
+     * @return mixed
+     */
+    public function live($id): mixed
+    {
+        $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->intended('/login');
+        }
+        $this->brandService->live($id);
+
+        return redirect()->back()->with('success', 'Brand has been live');
     }
 }

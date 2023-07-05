@@ -3,11 +3,12 @@
 namespace Modules\Brand\Entities;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Brand extends Model
 {
-    protected $fillable = [];
+    use SoftDeletes;
+    protected $guarded = [];
 
     public function user()
     {
