@@ -112,12 +112,12 @@ class BrandService
     {
         $countries = Country::orderBy('name', 'ASC')->get();
         $data = array();
-        foreach ($countries as $v) {
+        foreach ($countries as $country) {
             $data[] = array(
-                'id' => $v->id,
-                'country_code' => $v->shortname,
-                'country_name' => $v->name,
-                'phone_code' => $v->phonecode
+                'id' => $country->id,
+                'country_code' => $country->shortname,
+                'country_name' => $country->name,
+                'phone_code' => $country->phonecode
             );
         }
 
@@ -268,8 +268,8 @@ class BrandService
      */
     public function live($id): array
     {
-       $user = User::find($id);
-       Brand::where('user_id', $id)->update(['go_live' => User::BRAND_LIVE]);
+        $user = User::find($id);
+        Brand::where('user_id', $id)->update(['go_live' => User::BRAND_LIVE]);
 
         $webUrl = config('app.web_url');
         Mail::send('live_email', ['webUrl' => $webUrl, 'first_name' => $user->first_name], function ($message) use ($user) {
