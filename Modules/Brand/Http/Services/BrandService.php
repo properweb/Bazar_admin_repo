@@ -69,19 +69,24 @@ class BrandService
     public function detail($id): mixed
     {
 
-        $brand = User::findOrFail($id);
-        $detail = $brand->profile;
-        $category = Category::where('id',$detail->prime_cat)->first();
-        $headQuarter = Country::where('id',$detail->headquatered)->first();
-        $productMade = Country::where('id',$detail->product_made)->first();
-        $productShipped = Country::where('id',$detail->product_shipped)->first();
-
-        $detail['name'] = $brand->first_name.' '.$brand->last_name;
-        $detail['email'] = $brand->email ?? '';
-        $detail['prime-category'] = $category->title ?? '';
+        $userBrand = User::with('profile')->findOrFail($id);
+        $countryIds = [
+            $userBrand->profile->headquatered,
+            $userBrand->profile->product_made,
+            $userBrand->profile->product_shipped
+        ];
+        $countries = Country::whereIn('id', $countryIds)->get()->keyBy('id');
+        $headQuarter = $countries->get($userBrand->profile->headquatered);
+        $productMade = $countries->get($userBrand->profile->product_made);
+        $productShipped = $countries->get($userBrand->profile->product_shipped);
+        $category = Category::where('id',$userBrand->profile->prime_cat)->first();
+        $detail = $userBrand->profile;
         $detail['head-quarter'] = $headQuarter->name ?? '';
         $detail['product-made'] = $productMade->name ?? '';
         $detail['product-shipped'] = $productShipped->name ?? '';
+        $detail['prime-category'] = $category->title ?? '';
+        $detail['name'] = $userBrand->first_name.' '.$userBrand->last_name;
+        $detail['email'] = $userBrand->email ?? '';
 
         return $detail;
     }
@@ -110,14 +115,14 @@ class BrandService
      */
     public function getCountry(): array
     {
-        $countries = Country::orderBy('name', 'ASC')->get();
+        $countries = Country::select('id', 'shortname', 'name', 'phonecode')->get();
         $data = array();
         foreach ($countries as $country) {
             $data[] = array(
                 'id' => $country->id,
                 'country_code' => $country->shortname,
                 'country_name' => $country->name,
-                'phone_code' => $country->phonecode
+                'phone_code' => $country->phonecode,
             );
         }
 
@@ -132,7 +137,7 @@ class BrandService
     public function getCategory(): array
     {
         $data = [];
-        $mainCategories = Category::where('parent_id', 0)->where('status', '1')->orderBy('title', 'ASC')->get();
+        $mainCategories = Category::select('title', 'id')->where('parent_id', 0)->where('status', '1')->orderBy('title', 'ASC')->get();
         if ($mainCategories) {
             foreach ($mainCategories as $mainCategory) {
                 $data[] = array(
@@ -154,7 +159,7 @@ class BrandService
     public function getState($request): array
     {
 
-        $states = State::where('country_id',$request->countryId)->orderBy('name', 'ASC')->get();
+        $states = State::select('id', 'name')->where('country_id',$request->countryId)->orderBy('name', 'ASC')->get();
         $data = array();
         foreach ($states as $state) {
             $data[] = array(
@@ -174,7 +179,7 @@ class BrandService
      */
     public function getCity($request): array
     {
-        $cities = City::where('state_id',$request->stateId)->orderBy('name', 'ASC')->get();
+        $cities = City::select('id', 'name')->where('state_id',$request->stateId)->orderBy('name', 'ASC')->get();
 
         $data = array();
         foreach ($cities as $city) {
@@ -245,17 +250,26 @@ class BrandService
         $brand->product_made = $brandData["product_made"];
         $brand->product_shipped = $brandData["product_shipped"];
         $brand->num_products_sell = $brandData["num_products_sell"];
-        $brand->document = 'uploads/documents/'.$newFileName;
+        $brand->proof_document = 'uploads/documents/'.$newFileName;
 
 
         $brand->save();
 
-        $webUrl = config('app.web_url');
-        Mail::send('brand_email', ['webUrl' => $webUrl, 'first_name' => $brandData["first_name"],'email' => $brandData["email"],'password' => $password], function ($message) use ($brandData) {
-            $message->to($brandData['email']);
-            $message->from(config('app.from_email'));
-            $message->subject('Bazar:Your account has been created');
-        });
+        $sender = [
+            'address' => config('app.from_email'),
+            'name' => 'Bazaar',
+        ];
+        $recipient = $brandData['email'];
+        $subject = 'Bazar:Your seller account has been created';
+        $view = 'brand_email';
+        $data = [
+            'first_name' => $brandData["first_name"],
+            'email' => $brandData["email"],
+            'password' => $password,
+            'webUrl' => config('app.from_email')
+        ];
+
+        sendEmail($sender, $recipient, $subject, $view, $data);
 
         return true;
     }
@@ -268,15 +282,22 @@ class BrandService
      */
     public function live($id): array
     {
-        $user = User::find($id);
-        Brand::where('user_id', $id)->update(['go_live' => User::BRAND_LIVE]);
 
-        $webUrl = config('app.web_url');
-        Mail::send('live_email', ['webUrl' => $webUrl, 'first_name' => $user->first_name], function ($message) use ($user) {
-            $message->to($user->email);
-            $message->from(config('app.from_email'));
-            $message->subject('Bazar:Your shop has been live');
-        });
+        $user = User::find($id);
+        $user->profile->update(['go_live' => User::BRAND_LIVE]);
+        $sender = [
+            'address' => config('app.from_email'),
+            'name' => 'Bazaar',
+        ];
+        $recipient = $user->email;
+        $subject = 'Bazar:Your shop has been live';
+        $view = 'live_email';
+        $data = [
+            'first_name' => $user->first_name,
+            'webUrl' => config('app.from_email')
+        ];
+
+        sendEmail($sender, $recipient, $subject, $view, $data);
 
         return [
             'res' => true,
