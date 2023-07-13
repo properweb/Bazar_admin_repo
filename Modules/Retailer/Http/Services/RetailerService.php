@@ -63,7 +63,9 @@ class RetailerService
                 $query->select('user_id');
             }])->with('retailer');
         }
+
         $filteredCount = $retailers->count();
+
         $start = $request->start ?? 0;
         $length = $request->length ?? 0;
         $retailers = $retailers->offset($start)->limit($length);
@@ -97,14 +99,19 @@ class RetailerService
     {
         $userRetailer = User::with('retailer')->findOrFail($id);
         $detail = $userRetailer->retailer;
-        $country = Country::where('id', $userRetailer->retailer->country)->first();
-        $state = State::where('id', $userRetailer->retailer->state)->first();
-        $town = City::where('id', $userRetailer->retailer->town)->first();
+
+        $city = City::findOrFail($userRetailer->retailer->town);
+        $state = $city->state;
+        $cityName = $city->name;
+        $stateName = $city->state->name;
+        $countryName = $state->country->name;
+
+
         $detail['name'] = $userRetailer->first_name . ' ' . $userRetailer->last_name;
         $detail['email'] = $userRetailer->email ?? '';
-        $detail['country'] = $country->name ?? '';
-        $detail['state'] = $state->name ?? '';
-        $detail['town'] = $town->name ?? '';
+        $detail['country'] = $countryName ?? '';
+        $detail['state'] = $stateName ?? '';
+        $detail['town'] = $cityName ?? '';
         $detail['shipping'] = $userRetailer->shippings;
 
         return $detail;
@@ -155,15 +162,14 @@ class RetailerService
     public function getCountry(): array
     {
         $countries = Country::select('id', 'shortname', 'name', 'phonecode')->get();
-        $data = array();
-        foreach ($countries as $country) {
-            $data[] = array(
-                'id' => $country->id,
-                'country_code' => $country->shortname,
-                'country_name' => $country->name,
-                'phone_code' => $country->phonecode
-            );
-        }
+        $data = $countries->map(function ($item, $key) {
+            return [
+                'id' => $item->id,
+                'country_code' => $item->shortname,
+                'country_name' => $item->name,
+                'phone_code' => $item->phonecode,
+            ];
+        })->toArray();
 
         return $data;
     }
